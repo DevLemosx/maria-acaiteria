@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maria Açaíteria & Sorveteria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <a class="logo" href="#inicio" aria-label="Maria Açaíteria & Sorveteria, início"><img src="img/logo-header.jpg" alt="Maria Açaíteria & Sorveteria" height="46"></a>
+  <nav id="nv"><a href="#inicio">Início</a><a href="#cardapio">Cardápio</a><a href="#sobre">Sobre</a></nav>
+  <button class="ic" id="bag" aria-label="Abrir carrinho">🛒<b id="cnt">0</b></button>
+  <a class="btn" href="#cardapio" style="padding:.5rem 1rem">Pedir agora</a>
+  <button class="ic" id="mn" aria-label="Menu" aria-expanded="false">☰</button>
+</header>
+<main>
+<section class="hero" id="inicio"><div>
+  <div><h1>Seu açaí do seu jeito</h1><p>Escolha o tamanho, as frutas e os complementos. A gente recebe seu pedido direto no WhatsApp.</p><a class="btn" href="#cardapio">Ver cardápio</a></div>
+  <img class="hl" alt="Logo da Maria Açaíteria & Sorveteria" src="img/logo-hero.jpg">
+</div></section>
+<section class="wrap" id="cardapio">
+  <h2>Cardápio</h2>
+  <div class="tabs" id="tabs" role="group" aria-label="Categorias"></div>
+  <div class="grid" id="grid"></div>
+</section>
+<section class="about" id="sobre"><div class="wrap">
+  <h2>Sobre a Maria</h2>
+  <p style="max-width:60ch">Açaí, sorvete e salgados feitos para você montar do seu jeito. Faça o pedido pelo site e finalize pelo WhatsApp.</p>
+  <address style="font-style:normal;max-width:60ch;margin:1rem 0">📍 Praça do Ginásio, Bairro Célio Miranda<br>Paragominas - PA, 68625-372</address>
+  <div class="links"><a class="btn v" href="https://www.instagram.com/maria_acaiteria_e_sorveteria?psln=MmU0ZGc2Mmdmd2t3" target="_blank" rel="noopener">Instagram</a><a class="btn o" href="https://www.google.com/maps/search/?api=1&query=Pra%C3%A7a+do+Gin%C3%A1sio+C%C3%A9lio+Miranda+Paragominas+PA+68625-372" target="_blank" rel="noopener">Como chegar</a></div>
+</div></section>
+</main>
+<footer>Maria Açaíteria & Sorveteria · Paragominas - PA</footer>
+
+<dialog id="bd" aria-labelledby="bt"><div id="bi" style="display:contents"></div></dialog>
+<dialog id="cd" aria-labelledby="ct"><div id="ci" style="display:contents"></div></dialog>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>
