@@ -17,3 +17,7 @@
 input[type=number],select{font:inherit;width:100%;padding:.55rem .7rem;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 #ts{position:fixed;left:50%;bottom:calc(1rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.6rem 1.1rem;border-radius:99px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none}
 #ts.on{opacity:1}#ts.bad{background:var(--vm);color:#fff}
+.imgbox{border:1px dashed var(--line);border-radius:14px;padding:.7rem}
+.th{width:72px;height:72px;border-radius:14px;background:var(--line);display:grid;place-items:center;overflow:hidden;font-size:2rem;flex:none}.th img{width:100%;height:100%;object-fit:cover}
+label.btn{cursor:pointer;margin:0}
+@media(max-width:480px){.fl{grid-template-columns:1fr}.row2>label{flex:1 1 100%}.pd>summary{flex-wrap:wrap}}

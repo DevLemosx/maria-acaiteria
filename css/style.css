@@ -35,10 +35,7 @@ h2{font-size:2rem;margin-bottom:1rem}
 .cb h3{font-size:1.25rem}.cb p{margin:0;color:var(--mut);font-size:.92rem;flex:1}
 .pr{font-weight:800;color:var(--vm);font-size:1.1rem}
 .about{background:var(--card);border-top:1px solid var(--line)}
-dialog{border:0;padding:0;width:100%;max-width:560px;max-height:92dvh;margin:auto 0 0;border-radius:24px 24px 0 0;background:var(--bg);color:var(--ink);overflow:hidden}
-dialog[open]{display:flex;flex-direction:column}
-@media(min-width:700px){dialog{margin:auto;border-radius:24px}nav{display:flex!important;position:static;flex-direction:row;background:none;padding:0}#mn{display:none}.hero{grid-template-columns:1fr}.hero>div{display:grid;grid-template-columns:1fr auto;align-items:center}}
-dialog::backdrop{background:rgba(30,10,70,.6)}
+@media(min-width:700px){nav{display:flex!important;position:static;flex-direction:row;background:none;padding:0}#mn{display:none}.hero{grid-template-columns:1fr}.hero>div{display:grid;grid-template-columns:1fr auto;align-items:center}}
 .dh{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;border-bottom:1px solid var(--line)}
 .dh h2{margin:0;font-size:1.5rem}.x{background:var(--line);width:36px;height:36px;border-radius:50%;font-size:1.1rem}
 .db{overflow-y:auto;padding:1rem 1.2rem;flex:1}
@@ -68,3 +65,33 @@ input.bad{border-color:var(--vm)}
 .empty{text-align:center;padding:2.5rem 1rem;color:var(--mut)}
 .sum p{margin:.2rem 0}.sum h3{font-size:1.1rem;margin-top:1rem;color:var(--roxo)}
 .links{display:flex;gap:.6rem;flex-wrap:wrap}footer{text-align:center;padding:1.5rem;color:var(--mut);font-size:.9rem}
+
+/* sheets (painéis que sobem) */
+body.lock{overflow:hidden}
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.bk{position:absolute;inset:0;background:rgba(30,10,70,.6);opacity:0;transition:opacity .25s}
+.pn{position:relative;width:100%;max-width:560px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);border-radius:24px 24px 0 0;overflow:hidden;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.on .bk{opacity:1}.sheet.on .pn{transform:none}
+@media(min-width:700px){.sheet{align-items:center}.pn{border-radius:24px;transform:translateY(20px) scale(.98);opacity:0;transition:transform .25s,opacity .25s}.sheet.on .pn{opacity:1}}
+/* imagens, toast, toque */
+.ph{position:relative;overflow:hidden}.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#ts{position:fixed;left:50%;bottom:calc(1rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;max-width:90vw;text-align:center;background:var(--ink);color:var(--bg);padding:.6rem 1.1rem;border-radius:99px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none}
+#ts.on{opacity:1}#ts.bad{background:var(--vm);color:#fff}
+button,a,label{touch-action:manipulation}
+.chip span{padding:.55rem .95rem}.qty button{width:40px;height:40px}.x{width:40px;height:40px}.ic{min-height:40px}
+header .btn{white-space:nowrap}
+.adm{color:inherit;opacity:.7}
+@media(max-width:560px){
+ .btn.hd{display:none}
+ .grid{grid-template-columns:1fr;gap:.7rem}
+ .card{flex-direction:row;border-radius:16px}
+ .ph{width:104px;min-height:112px;height:auto;flex:none;font-size:2.4rem}.ml{font-size:2rem}.ml small{font-size:.8rem}
+ .cb{padding:.7rem .8rem;gap:.25rem;min-width:0}.cb h3{font-size:1.1rem}
+ .cb p{font-size:.85rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:none}
+ .cb .btn{align-self:flex-start;padding:.5rem 1rem;margin-top:.2rem}
+ .wrap{padding:1.4rem 1rem}h2{font-size:1.6rem}.hero{padding:1.6rem 1rem 2rem}
+ .df{padding:.7rem 1rem}.db{padding:.9rem 1rem}.dh{padding:.8rem 1rem}
+}
+@media(max-width:560px){.hl{max-width:230px}.hero h1{font-size:2.3rem}}
+@media(max-width:360px){.two{grid-template-columns:1fr}.logo img{height:38px}header{gap:.4rem;padding:.5rem .7rem}}

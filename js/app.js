@@ -17,12 +17,20 @@ const CATS=['Todos','Açaí','Barca','Salgados','Combos'];
 let doneUrl='',doneSrv=null,cart=[],cur=null,cat='Todos',view='cart',uid=0;
 let co={mode:'Entrega',pay:'PIX',card:'Débito',f:{},troco:''};
 
+/* painéis que sobem */
+let lastF=null;
+function openS(el){lastF=document.activeElement;el.hidden=false;void el.offsetWidth;el.classList.add('on');document.body.classList.add('lock');setTimeout(()=>{const b=el.querySelector('.x,.btn');b&&b.focus({preventScroll:true})},60)}
+function closeS(el){if(!el)return;el.classList.remove('on');setTimeout(()=>{if(!el.classList.contains('on'))el.hidden=true},300);if(!document.querySelector('.sheet.on'))document.body.classList.remove('lock');lastF&&lastF.focus&&lastF.focus({preventScroll:true})}
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeS(document.querySelector('.sheet.on'))});
+document.addEventListener('error',e=>{if(e.target.tagName=='IMG'&&e.target.closest('.ph'))e.target.remove()},true);
+
 /* menu */
 function drawMenu(){
  $('#tabs').innerHTML=CATS.map(c=>`<button class="tab" aria-pressed="${c==cat}" data-cat="${c}">${c}</button>`).join('');
  $('#grid').innerHTML=P.filter(p=>cat=='Todos'||p.cat==cat).map(p=>{
   const from=p.sizes?'a partir de '+R(p.sizes[0][1]):R(p.price);
-  return `<article class="card"><div class="ph" style="background:${p.bg}" aria-hidden="true">${p.ml?`<span class="ml">${p.ml}<small> ml</small></span>`:p.emoji}</div><div class="cb"><h3>${p.name}</h3><p>${p.desc}</p><div class="pr">${from}</div><button class="btn v" data-open="${p.id}">${p.direct?'Adicionar':'Montar pedido'}</button></div></article>`}).join('');
+  const im=/^https?:\/\//.test(p.img||'')?`<img src="${esc(p.img)}" alt="" loading="lazy">`:'';
+  return `<article class="card"><div class="ph" style="background:${p.bg}" aria-hidden="true">${im}${p.ml?`<span class="ml">${p.ml}<small> ml</small></span>`:p.emoji}</div><div class="cb"><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="pr">${from}</div><button class="btn v" data-open="${esc(p.id)}">${p.direct?'Adicionar':'Montar pedido'}</button></div></article>`}).join('');
 }
 /* builder */
 function openB(id,edit){
@@ -30,10 +38,10 @@ function openB(id,edit){
  if(p.direct&&!edit){add({pid:id,name:p.name,lines:[p.desc],unit:p.price,qty:1,cfg:null});toast();return}
  cur={p,si:0,sel:p.groups.map(()=>new Set()),qty:1,edit:null};
  if(edit){const c=edit.cfg;cur.si=c.si;cur.sel=c.sel.map(a=>new Set(a));cur.qty=edit.qty;cur.edit=edit.id}
- const g=p.groups.map((g,gi)=>`<fieldset><legend>${g.k}<small data-cn="${gi}"></small></legend><div class="chips">${g.l.map((n,i)=>`<label class="chip"><input type="checkbox" data-g="${gi}" value="${i}"${cur.sel[gi].has(i)?' checked':''}><span>${n}${g.p?' +'+R(g.p):''}</span></label>`).join('')}</div></fieldset>`).join('');
+ const g=p.groups.map((g,gi)=>`<fieldset><legend>${esc(g.k)}<small data-cn="${gi}"></small></legend><div class="chips">${g.l.map((n,i)=>`<label class="chip"><input type="checkbox" data-g="${gi}" value="${i}"${cur.sel[gi].has(i)?' checked':''}><span>${esc(n)}${g.p?' +'+R(g.p):''}</span></label>`).join('')}</div></fieldset>`).join('');
  const s=p.sizes?`<fieldset><legend>Tamanho</legend><div class="chips">${p.sizes.map((z,i)=>`<label class="chip"><input type="radio" name="sz" data-s="${i}"${i==cur.si?' checked':''}><span>${z[0]}${p.unit} · ${R(z[1])}</span></label>`).join('')}</div></fieldset>`:'';
- $('#bi').innerHTML=`<div class="dh"><h2 id="bt">${p.name}</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db">${s}${p.maxTotal?'<p id="mt" class="note" style="margin:0 0 1rem"></p>':''}${g}</div><div class="df"><div class="qty"><button data-q="-1" aria-label="Menos">−</button><span id="bq">1</span><button data-q="1" aria-label="Mais">+</button></div><button class="btn" id="bgo"></button></div>`;
- $('#bd').showModal();upd();
+ $('#bi').innerHTML=`<div class="dh"><h2 id="bt">${esc(p.name)}</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db">${s}${p.maxTotal?'<p id="mt" class="note" style="margin:0 0 1rem"></p>':''}${g}</div><div class="df"><div class="qty"><button data-q="-1" aria-label="Menos">−</button><span id="bq">1</span><button data-q="1" aria-label="Mais">+</button></div><button class="btn" id="bgo"></button></div>`;
+ openS($('#bd'));upd();
 }
 function unit(){const{p,si,sel}=cur;let u=p.sizes?p.sizes[si][1]:p.price;p.groups.forEach((g,i)=>{if(g.p)u+=g.p*sel[i].size});return u}
 function upd(){
@@ -47,15 +55,18 @@ function upd(){
  $('#bgo').textContent=(cur.edit?'Salvar · ':'Adicionar · ')+R(unit()*cur.qty);
 }
 function label(p,si){return p.sizes?`${p.name.replace('Açaí no copo','Açaí')} ${p.sizes[si][0]}${p.unit}`:p.name}
+function mkItem(p,sel,qty,id){
+ let unit=p.price;p.groups.forEach((g,i)=>{if(g.p)unit+=g.p*sel[i].length});
+ const lines=p.groups.map((g,i)=>sel[i].length?(p.groups.length>1?g.k+': ':'')+sel[i].map(j=>g.l[j]).join(', '):'').filter(Boolean);
+ return{id,pid:p.id,name:p.name,lines:p.groups.length?lines:[p.desc],unit,qty,cfg:p.groups.length?{si:0,sel}:null,items:p.groups.map((g,i)=>sel[i].map(j=>g.l[j])).flat()}}
 function save(){
- const{p,si,sel,qty}=cur;
- const lines=p.groups.map((g,i)=>[...sel[i]].length?(p.groups.length>1?g.k+': ':'')+[...sel[i]].map(j=>g.l[j]).join(', '):'').filter(Boolean);
- const it={pid:p.id,name:label(p,si),lines,unit:unit(),qty,cfg:{si,sel:sel.map(s=>[...s])},items:p.groups.map((g,i)=>[...sel[i]].map(j=>g.l[j])).flat()};
- if(cur.edit){const o=cart.find(x=>x.id==cur.edit);Object.assign(o,it)}else add(it);
- $('#bd').close();if(cur.edit)openC();else toast();
+ const{p,sel,qty}=cur,it=mkItem(p,sel.map(s=>[...s]),qty);
+ if(cur.edit){const o=cart.find(x=>x.id==cur.edit);Object.assign(o,it,{id:cur.edit});count()}else add(it);
+ closeS($('#bd'));if(cur.edit)openC();else toast();
 }
-function add(it){if(cart.length>=15){alert('Limite de 15 itens por pedido. Finalize este e faça outro, ou fale direto com a Maria.');return}it.id=++uid;cart.push(it);count()}
-function count(){$('#cnt').textContent=cart.reduce((a,i)=>a+i.qty,0)}
+function add(it){if(cart.length>=15){msg('Limite de 15 itens por pedido. Finalize este e faça outro, ou fale direto com a Maria.',1);return}it.id=++uid;cart.push(it);count()}
+function count(){$('#cnt').textContent=cart.reduce((a,i)=>a+i.qty,0);persist()}
+function msg(m,bad){const t=$('#ts');t.textContent=m;t.className='on'+(bad?' bad':'');clearTimeout(msg.t);msg.t=setTimeout(()=>t.className='',3200)}
 function toast(){const b=$('#bag');b.animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],300)}
 const total=()=>cart.reduce((a,i)=>a+i.unit*i.qty,0);
 
@@ -66,7 +77,7 @@ function parseM(s){s=String(s).replace(/[^\d,.]/g,'');if(!s)return NaN;
  const r=parseFloat(s);return isFinite(r)&&r<1e6?r:NaN}
 
 /* cart + checkout */
-function openC(v){if(v)view=v;drawC();if(!$('#cd').open)$('#cd').showModal()}
+function openC(v){if(v)view=v;drawC();if(!$('#cd').classList.contains('on'))openS($('#cd'))}
 function drawC(){
  const T=total(),ci=$('#ci');
  if(!cart.length){ci.innerHTML=`<div class="dh"><h2 id="ct">Seu carrinho</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db empty"><div style="font-size:3rem">🛒</div><p>Seu carrinho está vazio.<br>Escolha algo no cardápio.</p></div><div class="df"><button class="btn" data-x>Ver cardápio</button></div>`;return}
@@ -112,6 +123,19 @@ function waUrl(srv){
  return `https://wa.me/${WA}?text=${encodeURIComponent(m)}`;
 }
 
+/* carrinho salvo no aparelho */
+const LS='maria_v1';
+function toSaved(i){const pr=P.find(x=>x.id==i.pid),n={};if(i.cfg&&pr)pr.groups.forEach((g,gi)=>{n[g.k]=(i.cfg.sel[gi]||[]).map(j=>g.l[j])});return{id:i.id,pid:i.pid,qty:i.qty,names:n}}
+function fromSaved(list){return list.map(s=>{const pr=P.find(x=>x.id==s.pid);if(!pr)return null;
+ const sel=pr.groups.map(g=>((s.names||{})[g.k]||[]).map(n=>g.l.indexOf(n)).filter(j=>j>=0));
+ return mkItem(pr,sel,Math.min(20,Math.max(1,+s.qty||1)),s.id)}).filter(Boolean).slice(0,15)}
+function persist(){try{localStorage.setItem(LS,JSON.stringify({uid,cart:cart.map(toSaved),co:{mode:co.mode,pay:co.pay,card:co.card,f:co.f}}))}catch(e){}}
+function restore(){try{const d=JSON.parse(localStorage.getItem(LS)||'null');if(!d)return;uid=+d.uid||0;cart=fromSaved(Array.isArray(d.cart)?d.cart:[]);const c=d.co||{};
+ if(['Entrega','Retirada no local'].includes(c.mode))co.mode=c.mode;if(['PIX','Cartão','Dinheiro'].includes(c.pay))co.pay=c.pay;if(['Débito','Crédito'].includes(c.card))co.card=c.card;
+ if(c.f&&typeof c.f=='object')Object.keys(c.f).forEach(k=>{if(typeof c.f[k]=='string')co.f[k]=c.f[k].slice(0,80)});count()}catch(e){}}
+function remap(){const n=cart.length;cart=fromSaved(cart.map(toSaved));count();if(cart.length<n)msg('Alguns itens do carrinho não estão mais disponíveis e foram removidos.',1)}
+document.addEventListener('change',persist);document.addEventListener('input',persist);
+
 /* servidor (Supabase) */
 const SB='https://zqyynlqlgsyxozobcucs.supabase.co',KEY='sb_publishable_EGXYB-uLYZxpxiLJnrMtnA_4DQR9UMi';
 const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
@@ -122,8 +146,8 @@ async function loadMenu(){
   if(!r.ok)throw 0;const d=await r.json();if(!Array.isArray(d)||!d.length)throw 0;
   P=d.map(x=>{const ml=(x.id.match(/^acai(\d+)$/)||[])[1],
    g=(x.option_groups||[]).sort((a,b)=>a.sort-b.sort).map(g=>({k:g.name,l:(g.options||[]).sort((a,b)=>a.sort-b.sort).map(o=>o.name),max:g.max_select||undefined,p:+g.price_each||undefined}));
-   return{id:x.id,cat:x.category,name:x.name,desc:x.description||'',price:+x.price,maxTotal:x.max_total||undefined,groups:g,ml:ml&&+ml,emoji:EM[x.category],bg:(ml&&MB[ml])||BG[x.category],direct:g.length?0:1}});
-  drawMenu();
+   return{id:x.id,cat:x.category,name:x.name,desc:x.description||'',price:+x.price,maxTotal:x.max_total||undefined,groups:g,ml:ml&&+ml,emoji:EM[x.category],bg:(ml&&MB[ml])||BG[x.category],direct:g.length?0:1,img:x.image_url||''}});
+  remap();drawMenu();
  }catch(e){}
 }
 async function submit(btn){
@@ -142,21 +166,22 @@ async function submit(btn){
 
 /* events */
 document.addEventListener('click',e=>{
+ if(e.target.classList.contains('bk')){closeS(e.target.parentElement);return}
  const t=e.target.closest('button,a');if(!t)return;const D=t.dataset;
  if(D.cat){cat=D.cat;drawMenu()}
  else if(D.open)openB(D.open);
  else if(D.q){cur.qty=Math.min(20,Math.max(1,cur.qty+ +D.q));upd()}
  else if(t.id=='bgo')save();
- else if('x' in D){t.closest('dialog').close()}
+ else if('x' in D){closeS(t.closest('.sheet'))}
  else if(t.id=='bag')openC('cart');
  else if(t.id=='mn'){const o=$('#nv').classList.toggle('on');t.setAttribute('aria-expanded',o)}
  else if(t.closest('#nv'))$('#nv').classList.remove('on');
  else if(D.ci){const i=cart.find(x=>x.id==D.ci);i.qty=Math.min(20,Math.max(1,i.qty+ +D.d));count();drawC()}
  else if(D.rm){cart=cart.filter(x=>x.id!=D.rm);count();drawC()}
- else if(D.ed){$('#cd').close();const i=cart.find(x=>x.id==D.ed);openB(i.pid,i)}
+ else if(D.ed){closeS($('#cd'));const i=cart.find(x=>x.id==D.ed);openB(i.pid,i)}
  else if(D.go){if(D.go=='sum'&&!validate())return;view=D.go;drawC()}
  else if('send' in D)submit(t);
- else if('fin' in D)setTimeout(()=>{cart=[];count();co.troco='';view='cart';$('#cd').close()},400);
+ else if('fin' in D)setTimeout(()=>{cart=[];count();co.troco='';view='cart';closeS($('#cd'))},400);
 });
 document.addEventListener('change',e=>{
  const i=e.target,D=i.dataset;
@@ -170,5 +195,4 @@ document.addEventListener('change',e=>{
 document.addEventListener('input',e=>{const i=e.target;
  if(i.dataset.f){co.f[i.dataset.f]=i.value;i.classList.remove('bad')}
  else if(i.dataset.troco!==undefined){co.troco=i.value;tn()}});
-document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target==d)d.close()}));
-drawMenu();loadMenu();
+restore();drawMenu();loadMenu();
