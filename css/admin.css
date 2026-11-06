@@ -21,3 +21,12 @@ input[type=number],select{font:inherit;width:100%;padding:.55rem .7rem;border:2p
 .th{width:72px;height:72px;border-radius:14px;background:var(--line);display:grid;place-items:center;overflow:hidden;font-size:2rem;flex:none}.th img{width:100%;height:100%;object-fit:cover}
 label.btn{cursor:pointer;margin:0}
 @media(max-width:480px){.fl{grid-template-columns:1fr}.row2>label{flex:1 1 100%}.pd>summary{flex-wrap:wrap}}
+.tabs2{display:flex;gap:.5rem;position:sticky;top:58px;z-index:5;background:var(--bg);padding:.5rem 0;margin-bottom:.6rem}.tabs2 .tab{flex:1;text-align:center;min-height:44px}
+.box2{border:1px solid var(--line);border-radius:14px;padding:.7rem;margin-bottom:.6rem}
+.mut2{color:var(--mut);font-size:.9rem;margin:.6rem 0}
+.pd>summary span{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.wrap{padding:1rem .8rem}#who{display:none}.row2 .btn,.row2>button{width:100%}.row2>label{min-width:0!important}.op .btn{flex:none}.login{margin:1rem auto}h2{font-size:1.5rem}}
+.fl>*,.row2>*,.box2>*{min-width:0}.fl label,.box2 label,.in label{display:block;min-width:0}
+.in input[type=text],.in input[type=number],.in select,.box input[type=text],.box input[type=number],.box select{width:100%;max-width:100%}
+.in select,.box select{margin-top:.2rem}
+.pd .in,.box{overflow:hidden}

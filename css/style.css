@@ -93,5 +93,7 @@ header .btn{white-space:nowrap}
  .wrap{padding:1.4rem 1rem}h2{font-size:1.6rem}.hero{padding:1.6rem 1rem 2rem}
  .df{padding:.7rem 1rem}.db{padding:.9rem 1rem}.dh{padding:.8rem 1rem}
 }
-@media(max-width:560px){.hl{max-width:230px}.hero h1{font-size:2.3rem}}
+@media(max-width:699px){.hero>div{display:flex;flex-direction:column;align-items:center;text-align:center}.hero>div>div{display:flex;flex-direction:column;align-items:center}.hl{order:-1;max-width:300px;margin-bottom:.4rem}.hero h1{max-width:none;font-size:2.4rem}.hero p{margin:.8rem auto 1.3rem}}
 @media(max-width:360px){.two{grid-template-columns:1fr}.logo img{height:38px}header{gap:.4rem;padding:.5rem .7rem}}
+
+input,select,textarea{box-sizing:border-box}

@@ -142,10 +142,10 @@ const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json
 const EM={'Açaí':'🍇',Barca:'🛶',Salgados:'🥟',Combos:'🍟'},BG={'Açaí':'#dacbff',Barca:'#d9ecff',Salgados:'#fff0c2',Combos:'#ffe3e7'},MB={200:'#efe7ff',300:'#e6dcff',500:'#dacbff',700:'#cdb8ff'};
 async function loadMenu(){
  try{
-  const r=await fetch(SB+'/rest/v1/products?select=*,option_groups(*,options(*))&order=sort',{headers:H});
+  const r=await fetch(SB+'/rest/v1/products?select=*,product_groups(*,option_lists(*,options(*)))&order=sort',{headers:H});
   if(!r.ok)throw 0;const d=await r.json();if(!Array.isArray(d)||!d.length)throw 0;
   P=d.map(x=>{const ml=(x.id.match(/^acai(\d+)$/)||[])[1],
-   g=(x.option_groups||[]).sort((a,b)=>a.sort-b.sort).map(g=>({k:g.name,l:(g.options||[]).sort((a,b)=>a.sort-b.sort).map(o=>o.name),max:g.max_select||undefined,p:+g.price_each||undefined}));
+   g=(x.product_groups||[]).sort((a,b)=>a.sort-b.sort).map(g=>{const L=g.option_lists||{};return{k:g.label,l:(L.options||[]).sort((a,b)=>a.sort-b.sort).map(o=>o.name),max:g.max_select||undefined,p:+L.price_each||undefined}}).filter(g=>g.l.length);
    return{id:x.id,cat:x.category,name:x.name,desc:x.description||'',price:+x.price,maxTotal:x.max_total||undefined,groups:g,ml:ml&&+ml,emoji:EM[x.category],bg:(ml&&MB[ml])||BG[x.category],direct:g.length?0:1,img:x.image_url||''}});
   remap();drawMenu();
  }catch(e){}
