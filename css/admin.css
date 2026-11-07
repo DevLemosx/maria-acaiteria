@@ -14,7 +14,7 @@
 .op{display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem}.op input[type=text]{margin:0;flex:1}
 .op input[type=checkbox]{width:22px;height:22px;accent-color:var(--roxo2)}
 .sm{padding:.4rem .8rem;font-size:.85rem}.row2{display:flex;gap:.5rem;flex-wrap:wrap;align-items:end}
-input[type=number],select{font:inherit;width:100%;padding:.55rem .7rem;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+input[type=number],select{font:inherit;width:100%;padding:.55rem .7rem;border:2px solid var(--line);border-radius:12px;background:var(--card); color:var(--ink)}
 #ts{position:fixed;left:50%;bottom:calc(1rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.6rem 1.1rem;border-radius:99px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none}
 #ts.on{opacity:1}#ts.bad{background:var(--vm);color:#fff}
 .imgbox{border:1px dashed var(--line);border-radius:14px;padding:.7rem}

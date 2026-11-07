@@ -97,3 +97,18 @@ header .btn{white-space:nowrap}
 @media(max-width:360px){.two{grid-template-columns:1fr}.logo img{height:38px}header{gap:.4rem;padding:.5rem .7rem}}
 
 input,select,textarea{box-sizing:border-box}
+
+.sub{color:var(--mut);font-size:.95rem;margin-top:.2rem}.ob{margin:.3rem 0;font-size:.9rem;color:var(--mut);overflow-wrap:anywhere}
+textarea{width:100%;font:inherit;padding:.65rem .8rem;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);resize:vertical;box-sizing:border-box}
+
+.ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.ic svg {
+  width: 22px;
+  height: 22px;
+}

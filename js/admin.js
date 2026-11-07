@@ -1,7 +1,7 @@
 const SB='https://zqyynlqlgsyxozobcucs.supabase.co',KEY='sb_publishable_EGXYB-uLYZxpxiLJnrMtnA_4DQR9UMi';
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const CATS=['Açaí','Barca','Salgados','Combos'],TB={p:'products',l:'option_lists',o:'options',pg:'product_groups'};
-let S=null,prods=[],lists=[],tab='p';try{S=JSON.parse(sessionStorage.getItem('s'))}catch(e){}
+const CATS=['Açaí','Barca','Salgados','Combos'],TB={s:'store_settings',p:'products',l:'option_lists',o:'options',pg:'product_groups'};
+let S=null,prods=[],lists=[],st={delivery_fee:8},tab='p';try{S=JSON.parse(sessionStorage.getItem('s'))}catch(e){}
 function keep(s){S=s;try{s?sessionStorage.setItem('s',JSON.stringify(s)):sessionStorage.removeItem('s')}catch(e){}}
 function toast(m,bad){const t=$('#ts');t.textContent=m;t.className='on'+(bad?' bad':'');clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2400)}
 async function auth(path,body){
@@ -22,7 +22,7 @@ async function start(){
  $('#out').hidden=false;$('#who').textContent='Cardápio';await load()}
 async function load(){
  const open=new Set([...document.querySelectorAll('details[open]')].map(d=>d.dataset.id));
- [lists,prods]=await Promise.all([api('option_lists?select=*,options(*)&order=sort'),api('products?select=*,product_groups(*)&order=sort')]);render(open)}
+ [lists,prods,st]=await Promise.all([api('option_lists?select=*,options(*)&order=sort'),api('products?select=*,product_groups(*)&order=sort'),api('store_settings?select=*&id=eq.1').then(d=>d[0]||{delivery_fee:8})]);render(open)}
 
 const inp=(t,id,f,v,o={})=>`<label${o.w?' class="w"':''}>${o.l}<input type="${o.n?'number':'text'}" ${o.n?`min="${o.min??0}" step="${o.step||'0.01'}" inputmode="decimal"`:`maxlength="${o.max||80}"`} ${o.ph?`placeholder="${o.ph}"`:''} data-t="${t}" data-id="${esc(id)}" data-f="${f}" value="${esc(v)}"></label>`;
 const optRow=o=>`<div class="op"><input type="checkbox" title="Disponível" aria-label="Disponível" data-t="o" data-id="${o.id}" data-f="active"${o.active?' checked':''}><input type="text" maxlength="50" data-t="o" data-id="${o.id}" data-f="name" value="${esc(o.name)}"><button class="btn o sm" data-delo="${o.id}" aria-label="Remover ${esc(o.name)}">✕</button></div>`;
@@ -45,13 +45,13 @@ function listHtml(l,open){
  `<div class="op"><input type="text" maxlength="50" placeholder="Novo item" id="no${l.id}"><button class="btn v sm" data-addo="${l.id}">Adicionar</button></div></div></details>`}
 function render(open=new Set()){
  const o=id=>open.has(id)?' open':'';
- $('#app').innerHTML=`<div class="tabs2" role="group" aria-label="Seções"><button class="tab" aria-pressed="${tab=='p'}" data-tab="p">Produtos</button><button class="tab" aria-pressed="${tab=='l'}" data-tab="l">Adicionais</button></div>`+
- (tab=='p'?`<details class="box"><summary><strong>＋ Novo produto</strong></summary><div class="row2" style="margin-top:.8rem"><label style="flex:2;min-width:180px">Nome<input type="text" id="nn" maxlength="60"></label><label>Categoria<select id="nc">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></label><label>Preço (R$)<input type="number" id="np" min="0" step="0.01" inputmode="decimal"></label><button class="btn v sm" data-newp>Criar</button></div></details>`+prods.map(p=>prodHtml(p,o(p.id))).join(''):
+ $('#app').innerHTML=`<div class="tabs2" role="group" aria-label="Seções"><button class="tab" aria-pressed="${tab=='p'}" data-tab="p">Produtos</button><button class="tab" aria-pressed="${tab=='l'}" data-tab="l">Adicionais</button><button class="tab" aria-pressed="${tab=='s'}" data-tab="s">Entrega</button></div>`+
+ (tab=='s'?`<div class="box"><h3 style="margin:0 0 .4rem;font-family:Fredoka">Taxa de entrega</h3><p class="mut2" style="margin-top:0">Valor somado ao pedido quando o cliente escolhe entrega. Na retirada no local não há taxa.</p><div class="fl">${inp('s',1,'delivery_fee',st.delivery_fee,{l:'Valor da entrega (R$)',n:1})}</div></div>`:tab=='p'?`<details class="box"><summary><strong>＋ Novo produto</strong></summary><div class="row2" style="margin-top:.8rem"><label style="flex:2;min-width:180px">Nome<input type="text" id="nn" maxlength="60"></label><label>Categoria<select id="nc">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></label><label>Preço (R$)<input type="number" id="np" min="0" step="0.01" inputmode="decimal"></label><button class="btn v sm" data-newp>Criar</button></div></details>`+prods.map(p=>prodHtml(p,o(p.id))).join(''):
  `<p class="mut2" style="margin-top:0">Frutas, caldas, complementos e premium ficam aqui, uma vez só. Mudou aqui, mudou em todos os produtos.</p>`+lists.map(l=>listHtml(l,o('L'+l.id))).join(''))}
 
 async function patch(el){
  const t=el.dataset.t,f=el.dataset.f,id=el.dataset.id;let v=el.type=='checkbox'?el.checked:el.value.trim();
- if(el.type=='number'){v=v===''?null:+v;if(v!==null&&(!isFinite(v)||v<0)||(v===null&&['price','price_each'].includes(f)))return toast('Valor inválido',1)}
+ if(el.type=='number'){v=v===''?null:+v;if(v!==null&&(!isFinite(v)||v<0)||(v===null&&['price','price_each','delivery_fee'].includes(f)))return toast('Valor inválido',1)}
  else if(['name','label'].includes(f)&&!v)return toast('O nome não pode ficar vazio',1);
  else if(f=='image_url'){if(v&&!/^https?:\/\/\S+$/.test(v))return toast('Use um link que comece com https://',1);v=v||null}
  else if(f=='list_id')v=+v;

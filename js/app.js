@@ -35,12 +35,11 @@ function drawMenu(){
 /* builder */
 function openB(id,edit){
  const p=P.find(x=>x.id==id);
- if(p.direct&&!edit){add({pid:id,name:p.name,lines:[p.desc],unit:p.price,qty:1,cfg:null});toast();return}
- cur={p,si:0,sel:p.groups.map(()=>new Set()),qty:1,edit:null};
- if(edit){const c=edit.cfg;cur.si=c.si;cur.sel=c.sel.map(a=>new Set(a));cur.qty=edit.qty;cur.edit=edit.id}
+ cur={p,si:0,sel:p.groups.map(()=>new Set()),qty:1,edit:null,obs:''};
+ if(edit){const c=edit.cfg;cur.si=c.si;cur.sel=c.sel.map(a=>new Set(a));cur.qty=edit.qty;cur.obs=edit.obs||'';cur.edit=edit.id}
  const g=p.groups.map((g,gi)=>`<fieldset><legend>${esc(g.k)}<small data-cn="${gi}"></small></legend><div class="chips">${g.l.map((n,i)=>`<label class="chip"><input type="checkbox" data-g="${gi}" value="${i}"${cur.sel[gi].has(i)?' checked':''}><span>${esc(n)}${g.p?' +'+R(g.p):''}</span></label>`).join('')}</div></fieldset>`).join('');
  const s=p.sizes?`<fieldset><legend>Tamanho</legend><div class="chips">${p.sizes.map((z,i)=>`<label class="chip"><input type="radio" name="sz" data-s="${i}"${i==cur.si?' checked':''}><span>${z[0]}${p.unit} · ${R(z[1])}</span></label>`).join('')}</div></fieldset>`:'';
- $('#bi').innerHTML=`<div class="dh"><h2 id="bt">${esc(p.name)}</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db">${s}${p.maxTotal?'<p id="mt" class="note" style="margin:0 0 1rem"></p>':''}${g}</div><div class="df"><div class="qty"><button data-q="-1" aria-label="Menos">−</button><span id="bq">1</span><button data-q="1" aria-label="Mais">+</button></div><button class="btn" id="bgo"></button></div>`;
+ $('#bi').innerHTML=`<div class="dh"><h2 id="bt">${esc(p.name)}</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db">${p.direct?`<p style="margin:0 0 1rem;color:var(--mut)">${esc(p.desc)}</p>`:''}${s}${p.maxTotal?'<p id="mt" class="note" style="margin:0 0 1rem"></p>':''}${g}<fieldset><legend>Observação <small>opcional</small></legend><textarea id="ob" maxlength="140" rows="2" placeholder="Ex.: sem granola, calda à parte…">${esc(cur.obs)}</textarea></fieldset></div><div class="df"><div class="qty"><button data-q="-1" aria-label="Menos">−</button><span id="bq">1</span><button data-q="1" aria-label="Mais">+</button></div><button class="btn" id="bgo"></button></div>`;
  openS($('#bd'));upd();
 }
 function unit(){const{p,si,sel}=cur;let u=p.sizes?p.sizes[si][1]:p.price;p.groups.forEach((g,i)=>{if(g.p)u+=g.p*sel[i].size});return u}
@@ -55,12 +54,12 @@ function upd(){
  $('#bgo').textContent=(cur.edit?'Salvar · ':'Adicionar · ')+R(unit()*cur.qty);
 }
 function label(p,si){return p.sizes?`${p.name.replace('Açaí no copo','Açaí')} ${p.sizes[si][0]}${p.unit}`:p.name}
-function mkItem(p,sel,qty,id){
+function mkItem(p,sel,qty,id,obs){
  let unit=p.price;p.groups.forEach((g,i)=>{if(g.p)unit+=g.p*sel[i].length});
  const lines=p.groups.map((g,i)=>sel[i].length?(p.groups.length>1?g.k+': ':'')+sel[i].map(j=>g.l[j]).join(', '):'').filter(Boolean);
- return{id,pid:p.id,name:p.name,lines:p.groups.length?lines:[p.desc],unit,qty,cfg:p.groups.length?{si:0,sel}:null,items:p.groups.map((g,i)=>sel[i].map(j=>g.l[j])).flat()}}
+ return{id,pid:p.id,name:p.name,lines:p.groups.length?lines:[p.desc],unit,qty,cfg:{si:0,sel},d:p.groups.length?0:1,obs:String(obs||'').slice(0,140),items:p.groups.map((g,i)=>sel[i].map(j=>g.l[j])).flat()}}
 function save(){
- const{p,sel,qty}=cur,it=mkItem(p,sel.map(s=>[...s]),qty);
+ const{p,sel,qty}=cur,it=mkItem(p,sel.map(s=>[...s]),qty,undefined,cur.obs);
  if(cur.edit){const o=cart.find(x=>x.id==cur.edit);Object.assign(o,it,{id:cur.edit});count()}else add(it);
  closeS($('#bd'));if(cur.edit)openC();else toast();
 }
@@ -68,6 +67,8 @@ function add(it){if(cart.length>=15){msg('Limite de 15 itens por pedido. Finaliz
 function count(){$('#cnt').textContent=cart.reduce((a,i)=>a+i.qty,0);persist()}
 function msg(m,bad){const t=$('#ts');t.textContent=m;t.className='on'+(bad?' bad':'');clearTimeout(msg.t);msg.t=setTimeout(()=>t.className='',3200)}
 function toast(){const b=$('#bag');b.animate([{transform:'scale(1)'},{transform:'scale(1.25)'},{transform:'scale(1)'}],300)}
+let DF=8;
+const fee=()=>co.mode=='Entrega'?DF:0,grand=()=>total()+fee(),feeRows=()=>co.mode=='Entrega'?`<div class="row sub"><span>Subtotal</span><span>${R(total())}</span></div><div class="row sub"><span>Entrega</span><span>${R(DF)}</span></div>`:'';
 const total=()=>cart.reduce((a,i)=>a+i.unit*i.qty,0);
 
 /* money */
@@ -79,10 +80,10 @@ function parseM(s){s=String(s).replace(/[^\d,.]/g,'');if(!s)return NaN;
 /* cart + checkout */
 function openC(v){if(v)view=v;drawC();if(!$('#cd').classList.contains('on'))openS($('#cd'))}
 function drawC(){
- const T=total(),ci=$('#ci');
+ const T=total(),G=grand(),ci=$('#ci');
  if(!cart.length){ci.innerHTML=`<div class="dh"><h2 id="ct">Seu carrinho</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db empty"><div style="font-size:3rem">🛒</div><p>Seu carrinho está vazio.<br>Escolha algo no cardápio.</p></div><div class="df"><button class="btn" data-x>Ver cardápio</button></div>`;return}
  if(view=='cart'){
-  ci.innerHTML=`<div class="dh"><h2 id="ct">Seu carrinho</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db">${cart.map(i=>`<div class="it"><div class="row"><strong>${esc(i.name)}</strong><strong>${R(i.unit*i.qty)}</strong></div>${i.lines.length?`<ul>${i.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}<div class="row"><div class="qty"><button data-ci="${i.id}" data-d="-1" aria-label="Menos">−</button>${i.qty}<button data-ci="${i.id}" data-d="1" aria-label="Mais">+</button></div><div>${i.cfg?`<button class="lk" data-ed="${i.id}">Editar</button>`:''}<button class="lk" style="color:var(--vm)" data-rm="${i.id}">Remover</button></div></div></div>`).join('')}<div class="tot"><span>Total</span><span>${R(T)}</span></div></div><div class="df"><button class="btn o" data-x>Adicionar mais</button><button class="btn" data-go="co">Continuar</button></div>`;
+  ci.innerHTML=`<div class="dh"><h2 id="ct">Seu carrinho</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db">${cart.map(i=>`<div class="it"><div class="row"><strong>${esc(i.name)}</strong><strong>${R(i.unit*i.qty)}</strong></div>${i.lines.length?`<ul>${i.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}${i.obs?`<p class="ob">📝 ${esc(i.obs)}</p>`:''}<div class="row"><div class="qty"><button data-ci="${i.id}" data-d="-1" aria-label="Menos">−</button>${i.qty}<button data-ci="${i.id}" data-d="1" aria-label="Mais">+</button></div><div>${i.cfg?`<button class="lk" data-ed="${i.id}">Editar</button>`:''}<button class="lk" style="color:var(--vm)" data-rm="${i.id}">Remover</button></div></div></div>`).join('')}<div class="tot"><span>Subtotal</span><span>${R(T)}</span></div><p class="sub" style="margin:.4rem 0 0">Entrega: + ${R(DF)} (só se você escolher entrega)</p></div><div class="df"><button class="btn o" data-x>Adicionar mais</button><button class="btn" data-go="co">Continuar</button></div>`;
  }else if(view=='co'){
   const f=co.f,d=co.mode=='Entrega',inp=(n,l,t='text')=>`<label class="f">${l}<input type="${t}" maxlength="80" data-f="${n}" value="${esc(f[n]||'')}" ${n=='nome'?'autocomplete="name"':''}></label>`;
   ci.innerHTML=`<div class="dh"><h2 id="ct">Finalizar pedido</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db"><fieldset><legend>Como você quer receber?</legend><div class="chips">${['Entrega','Retirada no local'].map(m=>`<label class="chip"><input type="radio" name="md" data-md="${m}"${co.mode==m?' checked':''}><span>${m}</span></label>`).join('')}</div></fieldset>
@@ -91,32 +92,32 @@ function drawC(){
   <fieldset><legend>Pagamento</legend><div class="chips">${['PIX','Cartão','Dinheiro'].map(m=>`<label class="chip"><input type="radio" name="pg" data-pg="${m}"${co.pay==m?' checked':''}><span>${m}</span></label>`).join('')}</div></fieldset>
   ${co.pay=='Cartão'?`<div class="chips" style="margin-bottom:1rem">${['Débito','Crédito'].map(m=>`<label class="chip"><input type="radio" name="cc" data-cc="${m}"${co.card==m?' checked':''}><span>${m}</span></label>`).join('')}</div>`:''}
   ${co.pay=='Dinheiro'?`<label class="f">Troco para quanto?<input type="text" inputmode="decimal" maxlength="12" data-troco placeholder="Ex.: 50" value="${esc(co.troco)}"></label><div id="tn" class="note"></div>`:''}
-  <div id="er" class="err" role="alert"></div><div class="tot"><span>Total</span><span>${R(T)}</span></div></div><div class="df"><button class="btn o" data-go="cart">Voltar</button><button class="btn" data-go="sum">Revisar pedido</button></div>`;
+  <div id="er" class="err" role="alert"></div>${feeRows()}<div class="tot"><span>Total</span><span>${R(G)}</span></div></div><div class="df"><button class="btn o" data-go="cart">Voltar</button><button class="btn" data-go="sum">Revisar pedido</button></div>`;
   tn();
  }else if(view=='done'){
   ci.innerHTML=`<div class="dh"><h2 id="ct">Falta só um passo</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db" style="text-align:center"><div style="font-size:3rem">${doneSrv?'✅':'📲'}</div><p>${doneSrv?`Pedido <strong>${esc(doneSrv.code)}</strong> registrado. Total ${R(+doneSrv.total)}.`:'Seu pedido está pronto para enviar. A Maria confirma o valor com você.'}</p><p>Toque no botão para enviar a mensagem pelo WhatsApp. O pedido só chega para a Maria depois que você enviar.</p></div><div class="df"><a class="btn full" data-fin href="${esc(doneUrl)}" target="_blank" rel="noopener">Abrir WhatsApp</a></div>`;
  }else{
   const d=co.mode=='Entrega',f=co.f,tv=parseM(co.troco);
-  ci.innerHTML=`<div class="dh"><h2 id="ct">Confirme seu pedido</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db sum">${cart.map(i=>`<div class="it"><div class="row"><strong>${i.qty}× ${esc(i.name)}</strong><strong>${R(i.unit*i.qty)}</strong></div>${i.lines.length?`<ul>${i.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}</div>`).join('')}
+  ci.innerHTML=`<div class="dh"><h2 id="ct">Confirme seu pedido</h2><button class="x" data-x aria-label="Fechar">✕</button></div><div class="db sum">${cart.map(i=>`<div class="it"><div class="row"><strong>${i.qty}× ${esc(i.name)}</strong><strong>${R(i.unit*i.qty)}</strong></div>${i.lines.length?`<ul>${i.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}${i.obs?`<p class="ob">📝 ${esc(i.obs)}</p>`:''}</div>`).join('')}
   <h3>${co.mode}</h3><p>${esc(f.nome)} · ${esc(f.tel)}</p>${d?`<p>${esc(f.rua)}, nº ${esc(f.num)} · ${esc(f.bairro)}${f.comp?'<br>'+esc(f.comp):''}${f.ref?'<br>Ref.: '+esc(f.ref):''}</p>`:''}
-  <h3>Pagamento</h3><p>${co.pay=='Cartão'?'Cartão de '+co.card.toLowerCase():co.pay}${co.pay=='Dinheiro'&&tv?`<br>Troco para ${R(tv)} (troco de ${R(tv-T)})`:''}</p>
-  <div id="er2" class="err" role="alert"></div><div class="tot"><span>Total</span><span>${R(T)}</span></div></div><div class="df"><button class="btn o" data-go="co">Editar</button><button class="btn" data-send>Enviar pedido</button></div>`;
+  <h3>Pagamento</h3><p>${co.pay=='Cartão'?'Cartão de '+co.card.toLowerCase():co.pay}${co.pay=='Dinheiro'&&tv?`<br>Troco para ${R(tv)} (troco de ${R(tv-G)})`:''}</p>
+  <div id="er2" class="err" role="alert"></div>${feeRows()}<div class="tot"><span>Total</span><span>${R(G)}</span></div></div><div class="df"><button class="btn o" data-go="co">Editar</button><button class="btn" data-send>Enviar pedido</button></div>`;
  }
 }
-function tn(){const n=$('#tn');if(!n)return;const v=parseM(co.troco),T=total();
+function tn(){const n=$('#tn');if(!n)return;const v=parseM(co.troco),T=grand();
  n.className=v<T?'err':'note';n.textContent=isNaN(v)||!co.troco?'':v<T?'O valor é menor que o total ('+R(T)+').':'Troco: '+R(v-T)}
 function validate(){
  const f=co.f,need=['nome','tel'].concat(co.mode=='Entrega'?['rua','num','bairro']:[]);let bad=need.filter(k=>!(f[k]||'').trim());
  document.querySelectorAll('[data-f]').forEach(i=>i.classList.toggle('bad',bad.includes(i.dataset.f)));
  let msg=bad.length?'Preencha os campos destacados.':'';
  if(!msg&&(f.tel.replace(/\D/g,'').length<10))msg='Informe um telefone com DDD.',document.querySelector('[data-f=tel]').classList.add('bad');
- if(!msg&&co.pay=='Dinheiro'&&co.troco){const v=parseM(co.troco);if(isNaN(v)||v<total())msg='O valor do troco deve ser maior ou igual ao total.'}
+ if(!msg&&co.pay=='Dinheiro'&&co.troco){const v=parseM(co.troco);if(isNaN(v)||v<grand())msg='O valor do troco deve ser maior ou igual ao total.'}
  $('#er').textContent=msg;return!msg}
 function waUrl(srv){
- const f=co.f,T=srv?+srv.total:total(),d=co.mode=='Entrega';
+ const f=co.f,T=srv?+srv.total:grand(),d=co.mode=='Entrega';
  let m=srv?`Olá! Gostaria de fazer um pedido (nº ${srv.code}):\n\n`:'Olá! Gostaria de fazer um pedido:\n\n';
- cart.forEach(i=>{m+=`🍇 *${i.qty>1?i.qty+'× ':''}${i.name}*\n`;(i.cfg?i.items:i.lines).forEach(l=>m+='• '+l+'\n');m+='\n'});
- m+=d?`🛵 *Entrega*\n${f.rua}, nº ${f.num}\n${f.bairro}\n${f.comp?f.comp+'\n':''}${f.ref?'Ref.: '+f.ref+'\n':''}`:'🏪 *Retirada no local*\n';
+ cart.forEach(i=>{m+=`🍇 *${i.qty>1?i.qty+'× ':''}${i.name}*\n`;(i.d?i.lines:i.items).forEach(l=>m+='• '+l+'\n');if(i.obs)m+='📝 Obs: '+i.obs+'\n';m+='\n'});
+ m+=d?`🛵 *Entrega* (taxa ${R(srv&&srv.delivery_fee!=null?+srv.delivery_fee:DF)})\n${f.rua}, nº ${f.num}\n${f.bairro}\n${f.comp?f.comp+'\n':''}${f.ref?'Ref.: '+f.ref+'\n':''}`:'🏪 *Retirada no local*\n';
  m+=`👤 ${f.nome} · ${f.tel}\n\n💳 Pagamento: ${co.pay=='Cartão'?'Cartão ('+co.card+')':co.pay}\n`;
  const tv=parseM(co.troco);if(co.pay=='Dinheiro'&&tv)m+=`💵 Troco para: ${R(tv)}\n`;
  m+=`💰 Total: ${R(T)}`;
@@ -125,10 +126,10 @@ function waUrl(srv){
 
 /* carrinho salvo no aparelho */
 const LS='maria_v1';
-function toSaved(i){const pr=P.find(x=>x.id==i.pid),n={};if(i.cfg&&pr)pr.groups.forEach((g,gi)=>{n[g.k]=(i.cfg.sel[gi]||[]).map(j=>g.l[j])});return{id:i.id,pid:i.pid,qty:i.qty,names:n}}
+function toSaved(i){const pr=P.find(x=>x.id==i.pid),n={};if(i.cfg&&pr)pr.groups.forEach((g,gi)=>{n[g.k]=(i.cfg.sel[gi]||[]).map(j=>g.l[j])});return{id:i.id,pid:i.pid,qty:i.qty,names:n,obs:i.obs||''}}
 function fromSaved(list){return list.map(s=>{const pr=P.find(x=>x.id==s.pid);if(!pr)return null;
  const sel=pr.groups.map(g=>((s.names||{})[g.k]||[]).map(n=>g.l.indexOf(n)).filter(j=>j>=0));
- return mkItem(pr,sel,Math.min(20,Math.max(1,+s.qty||1)),s.id)}).filter(Boolean).slice(0,15)}
+ return mkItem(pr,sel,Math.min(20,Math.max(1,+s.qty||1)),s.id,s.obs)}).filter(Boolean).slice(0,15)}
 function persist(){try{localStorage.setItem(LS,JSON.stringify({uid,cart:cart.map(toSaved),co:{mode:co.mode,pay:co.pay,card:co.card,f:co.f}}))}catch(e){}}
 function restore(){try{const d=JSON.parse(localStorage.getItem(LS)||'null');if(!d)return;uid=+d.uid||0;cart=fromSaved(Array.isArray(d.cart)?d.cart:[]);const c=d.co||{};
  if(['Entrega','Retirada no local'].includes(c.mode))co.mode=c.mode;if(['PIX','Cartão','Dinheiro'].includes(c.pay))co.pay=c.pay;if(['Débito','Crédito'].includes(c.card))co.card=c.card;
@@ -150,13 +151,14 @@ async function loadMenu(){
   remap();drawMenu();
  }catch(e){}
 }
+async function loadFee(){try{const r=await fetch(SB+'/rest/v1/store_settings?select=delivery_fee&id=eq.1',{headers:H});if(r.ok){const d=await r.json();if(d[0]&&isFinite(+d[0].delivery_fee))DF=+d[0].delivery_fee}}catch(e){}}
 async function submit(btn){
  const er=$('#er2');er.textContent='';btn.disabled=true;btn.textContent='Enviando…';
  let srv=null;
  try{
   const f=co.f,tv=parseM(co.troco);
   const body={p:{mode:co.mode=='Entrega'?'Entrega':'Retirada',customer:{name:f.nome,phone:f.tel},address:{rua:f.rua||'',num:f.num||'',bairro:f.bairro||'',comp:f.comp||'',ref:f.ref||''},payment:co.pay,card:co.pay=='Cartão'?co.card:null,change_for:co.pay=='Dinheiro'&&tv?tv:null,
-   items:cart.map(i=>{const pr=P.find(x=>x.id==i.pid),sel={};if(i.cfg)pr.groups.forEach((g,gi)=>{const a=i.cfg.sel[gi];if(a&&a.length)sel[g.k]=a.map(j=>g.l[j])});return{product_id:i.pid,qty:i.qty,selections:sel}})}};
+   items:cart.map(i=>{const pr=P.find(x=>x.id==i.pid),sel={};if(i.cfg)pr.groups.forEach((g,gi)=>{const a=i.cfg.sel[gi];if(a&&a.length)sel[g.k]=a.map(j=>g.l[j])});return{product_id:i.pid,qty:i.qty,selections:sel,obs:i.obs||''}})}};
   const r=await fetch(SB+'/rest/v1/rpc/create_order',{method:'POST',headers:H,body:JSON.stringify(body)});
   if(r.ok)srv=await r.json();
   else{const e=await r.json().catch(()=>({}));if(r.status==400&&e.message){er.textContent=e.message;btn.disabled=false;btn.textContent='Enviar pedido';return}}
@@ -194,5 +196,6 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('input',e=>{const i=e.target;
  if(i.dataset.f){co.f[i.dataset.f]=i.value;i.classList.remove('bad')}
- else if(i.dataset.troco!==undefined){co.troco=i.value;tn()}});
-restore();drawMenu();loadMenu();
+ else if(i.dataset.troco!==undefined){co.troco=i.value;tn()}
+ else if(i.id=='ob'&&cur)cur.obs=i.value});
+restore();drawMenu();loadMenu();loadFee();
